@@ -11,7 +11,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const cookie = request.headers.get("Cookie");
   const token = cookie
     ?.split("; ")
-    .find((row) => row.startsWith("auth-token="))
+    .find((row) => row.startsWith("id-token="))
     ?.split("=")[1];
 
   try {

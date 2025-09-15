@@ -28,11 +28,19 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
+  // TODO: TOKEN
   // クッキーにJWTトークンを設定してリダイレクト
   return redirect("/dashboard", {
-    headers: {
-      "Set-Cookie": `auth-token=${authResult.token}; Path=/; HttpOnly;  Secure; SameSite=Strict; Max-Age=300`, // 5分間
-    },
+    headers: [
+      [
+        "Set-Cookie",
+        `id-token=${authResult.idToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${60 * 15}`, // 15分
+      ],
+      [
+        "Set-Cookie",
+        `refresh-token=${authResult.refreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${60 * 60 * 24 * 30}`, // 30日
+      ],
+    ],
   });
 }
 

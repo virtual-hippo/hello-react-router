@@ -43,8 +43,8 @@ export type User = {
 export type LoginResult =
   | {
       readonly ok: true;
-      readonly user: Omit<User, "auth">;
-      readonly token: string;
+      readonly idToken: string;
+      readonly refreshToken: string;
     }
   | {
       readonly ok: false;
@@ -81,11 +81,16 @@ export async function login(
 
   const userWithoutAuth = { id: user.id, name: user.name, email: user.email };
 
-  const token = createToken(userWithoutAuth);
+  // TODO:
+  // - token ごとのペイロードを変える
+  // - id token は短めにする
+  // - refresh token は長めにする
+  const idToken = createToken(userWithoutAuth);
+  const refreshToken = createToken(userWithoutAuth);
 
   return {
     ok: true,
-    user: userWithoutAuth,
-    token,
+    idToken,
+    refreshToken,
   };
 }
