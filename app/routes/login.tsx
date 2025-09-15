@@ -1,6 +1,8 @@
 import { Form, redirect, useActionData } from "react-router";
 import type { Route } from "./+types/login";
 
+import { login } from "../utils/auth.server.ts";
+
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "New React Router App" },
@@ -10,26 +12,26 @@ export function meta({}: Route.MetaArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const email = formData.get("email");
-  const password = formData.get("password");
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
 
   //
   // ダミー認証
   // Production では、認証サーバーに問い合わせるなどの処理を行う
   //
 
-  if (email !== "valid@valid.com") {
+  const authResult = await login(email, password);
+
+  if (!authResult.ok) {
     return {
       error: "ログインに失敗しました",
     };
   }
 
-  const token = "valid-token";
-
   // クッキーにJWTトークンを設定してリダイレクト
   return redirect("/dashboard", {
     headers: {
-      "Set-Cookie": `auth-token=${token}; Path=/; HttpOnly;  Secure; SameSite=Strict; Max-Age=300`, // 5分間
+      "Set-Cookie": `auth-token=${authResult.token}; Path=/; HttpOnly;  Secure; SameSite=Strict; Max-Age=300`, // 5分間
     },
   });
 }
