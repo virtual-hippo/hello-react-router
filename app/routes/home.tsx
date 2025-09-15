@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { href, Link } from "react-router";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,5 +9,17 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  return <Welcome />;
+  return (
+    <ul className="my-6 space-y-2">
+      <li className="flex items-center">
+        <Link to={href("/login")}>ログイン</Link>
+      </li>
+      <li className="flex items-center">
+        <Link to={href("/dashboard")}>ダッシュボード</Link>
+      </li>
+      <li className="flex items-center">
+        <Link to={href("/dashboard/settings")}>ダッシュボード設定</Link>
+      </li>
+    </ul>
+  );
 }
