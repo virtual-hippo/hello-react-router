@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "hello-react",
   "private": true,
   "type": "module",
   "scripts": {
@@ -26,5 +26,10 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
     "vite-tsconfig-paths": "^5.1.4"
+  },
+  "engines": {
+    "pnpm": ">=10.16.1",
+    "npm": "please-use-pnpm",
+    "yarn": "please-use-pnpm"
   }
 }
