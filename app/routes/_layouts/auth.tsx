@@ -19,7 +19,7 @@ export function loader({ request }: Route.LoaderArgs) {
     // トークンが無効な場合
     throw redirect("/login", {
       headers: {
-        "Set-Cookie": "auth-token=; Path=/; HttpOnly; Max-Age=0",
+        "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
       },
     });
   }

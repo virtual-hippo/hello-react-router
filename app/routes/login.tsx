@@ -29,7 +29,7 @@ export async function action({ request }: Route.ActionArgs) {
   // クッキーにJWTトークンを設定してリダイレクト
   return redirect("/dashboard", {
     headers: {
-      "Set-Cookie": `auth-token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=604800`, // 7日間
+      "Set-Cookie": `auth-token=${token}; Path=/; HttpOnly;  Secure; SameSite=Strict; Max-Age=300`, // 5分間
     },
   });
 }
