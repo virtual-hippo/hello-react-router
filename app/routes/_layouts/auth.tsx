@@ -14,7 +14,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   try {
-    const user = await verifyIdToken(cookie["id-token"]);
+    const user = verifyIdToken(cookie["id-token"]);
     return { userName: user?.name ?? "Unknown" };
   } catch {
     // トークンの検証に失敗した場合はログイン画面へリダイレクト
