@@ -3,10 +3,6 @@ import type { Route } from "./+types/auth";
 
 import { verifyToken, type User } from "../../utils/auth.server.ts";
 
-export type AuthContext = {
-  readonly isAuth: boolean;
-};
-
 export async function loader({ request }: Route.LoaderArgs) {
   const cookie = request.headers.get("Cookie");
   const token = cookie
@@ -14,23 +10,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     .find((row) => row.startsWith("id-token="))
     ?.split("=")[1];
 
+  // トークンが存在しない場合はログイン画面へリダイレクト
+  if (!token) {
+    throw redirect("/login", {
+      headers: {
+        "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
+      },
+    });
+  }
+
   try {
-    const jwtPayLoad = token && (await verifyToken(token));
-
-    if (!jwtPayLoad) {
-      // トークンが無効な場合
-      throw redirect("/login", {
-        headers: {
-          "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
-        },
-      });
-    }
-
-    // jwtPayLoad の中身は、createToken() で指定したペイロードになっているはず
-    const user = jwtPayLoad as Omit<User, "auth">;
+    const user = await verifyToken(token);
     return { userName: user?.name ?? "Unknown" };
   } catch {
-    // トークンの検証に失敗した場合
+    // トークンの検証に失敗した場合はログイン画面へリダイレクト
     throw redirect("/login", {
       headers: {
         "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
@@ -39,9 +32,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 }
 
-export default function Layout({ loaderData }: Route.ComponentProps) {
-  const { userName } = loaderData;
-
+export default function Layout() {
   return (
     <>
       <Outlet />

@@ -15,11 +15,6 @@ export async function action({ request }: Route.ActionArgs) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  //
-  // ダミー認証
-  // Production では、認証サーバーに問い合わせるなどの処理を行う
-  //
-
   const authResult = await login(email, password);
 
   if (!authResult.ok) {
@@ -28,7 +23,6 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
-  // TODO: TOKEN
   // クッキーにJWTトークンを設定してリダイレクト
   return redirect("/dashboard", {
     headers: [

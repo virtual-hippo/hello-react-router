@@ -1,15 +1,18 @@
+// ------------------------------------------------------------------------------------------------
+// 公式の Authentication utilities をほぼ流用
 // https://reactrouter.com/api/framework-conventions/server-modules#authentication-utilities
+// ------------------------------------------------------------------------------------------------
 
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
-export function hashPassword(password: string) {
+function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
 }
 
-export function verifyPassword(password: string, hash: string) {
+function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
@@ -19,11 +22,14 @@ export function createToken(user: Omit<User, "auth">) {
   });
 }
 
-export function verifyToken(token: string) {
-  return jwt.verify(token, JWT_SECRET);
+export async function verifyToken(token: string): Promise<Omit<User, "auth">> {
+  const jwtPayLoad = await jwt.verify(token, JWT_SECRET);
+  return jwtPayLoad as Omit<User, "auth">;
 }
 
-// ダミーデータと認証関数
+// ------------------------------------------------------------------------------------------------
+// 以下は自前で定義
+// ------------------------------------------------------------------------------------------------
 
 type UserId = string & { readonly __brand: "userId" };
 type UserName = string & { readonly __brand: "userName" };
@@ -63,18 +69,24 @@ const users: User[] = [
   },
 ];
 
+/**
+ *
+ * ダミー認証
+ * Production では、認証サーバーに問い合わせるなどの処理を行うようにしてください
+ *
+ */
 export async function login(
   email: string,
   password: string
 ): Promise<LoginResult> {
   const user = users.find((u) => u.email === email);
-  // return user ? bcrypt.compare(password, user.hashedPassword) : false;
 
   if (!user) {
     return { ok: false, error: "User not found" };
   }
 
-  //   const isValid = await bcrypt.compare(password, user.auth.hashedPassword);
+  // Sign Up 時にパスワードをハッシュ化して保存する場合
+  //   const isValid = await verifyPassword(password, user.auth.hashedPassword);
   //   if (!isValid) {
   //     return { ok: false, error: "Invalid password" };
   //   }
