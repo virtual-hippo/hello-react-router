@@ -22,7 +22,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     cookie["id-token"] = "";
     throw redirect("/login", {
       headers: {
-        "Set-Cookie": await idTokenCookie.serialize(cookie),
+        "Set-Cookie": await idTokenCookie.serialize(cookie, { maxAge: 0 }),
       },
     });
   }
