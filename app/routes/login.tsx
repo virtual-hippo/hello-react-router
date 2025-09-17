@@ -2,6 +2,7 @@ import { Form, redirect, useActionData } from "react-router";
 import type { Route } from "./+types/login";
 
 import { login } from "../utils/auth.server.ts";
+import { idTokenCookie, refreshTokenCookie } from "~/utils/cookies.server.ts";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -11,6 +12,11 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const cookieHeader = request.headers.get("Cookie");
+  const idTokenCookieObj = (await idTokenCookie.parse(cookieHeader)) || {};
+  const refreshTokenCookieObj =
+    (await refreshTokenCookie.parse(cookieHeader)) || {};
+
   const formData = await request.formData();
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -23,17 +29,14 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
+  idTokenCookieObj["id-token"] = authResult.idToken;
+  refreshTokenCookieObj["refresh-token"] = authResult.refreshToken;
+
   // クッキーにJWTトークンを設定してリダイレクト
   return redirect("/dashboard", {
     headers: [
-      [
-        "Set-Cookie",
-        `id-token=${authResult.idToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${60 * 15}`, // 15分
-      ],
-      [
-        "Set-Cookie",
-        `refresh-token=${authResult.refreshToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${60 * 60 * 24 * 30}`, // 30日
-      ],
+      ["Set-Cookie", await idTokenCookie.serialize(idTokenCookieObj)],
+      ["Set-Cookie", await refreshTokenCookie.serialize(refreshTokenCookieObj)],
     ],
   });
 }

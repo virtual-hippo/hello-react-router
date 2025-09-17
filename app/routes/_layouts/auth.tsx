@@ -1,33 +1,28 @@
 import { Outlet, redirect } from "react-router";
 import type { Route } from "./+types/auth";
 
-import { verifyIdToken, type User } from "../../utils/auth.server.ts";
+import { verifyIdToken } from "~/utils/auth.server.ts";
+import { idTokenCookie } from "~/utils/cookies.server.ts";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const cookie = request.headers.get("Cookie");
-  const token = cookie
-    ?.split("; ")
-    .find((row) => row.startsWith("id-token="))
-    ?.split("=")[1];
+  const cookieHeader = request.headers.get("Cookie");
+  const cookie = (await idTokenCookie.parse(cookieHeader)) || {};
 
   // トークンが存在しない場合はログイン画面へリダイレクト
-  if (!token) {
-    throw redirect("/login", {
-      headers: {
-        "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
-      },
-    });
+  if (!cookie["id-token"]) {
+    throw redirect("/login");
   }
 
   try {
-    const user = await verifyIdToken(token);
+    const user = await verifyIdToken(cookie["id-token"]);
     return { userName: user?.name ?? "Unknown" };
   } catch {
     // トークンの検証に失敗した場合はログイン画面へリダイレクト
     // refresh トークンを使って再発行する処理を入れたいが今回は実装をサボる
+    cookie["id-token"] = "";
     throw redirect("/login", {
       headers: {
-        "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",
+        "Set-Cookie": await idTokenCookie.serialize(cookie),
       },
     });
   }
