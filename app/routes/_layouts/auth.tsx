@@ -1,7 +1,7 @@
 import { Outlet, redirect } from "react-router";
 import type { Route } from "./+types/auth";
 
-import { verifyToken, type User } from "../../utils/auth.server.ts";
+import { verifyIdToken, type User } from "../../utils/auth.server.ts";
 
 export async function loader({ request }: Route.LoaderArgs) {
   const cookie = request.headers.get("Cookie");
@@ -20,10 +20,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   try {
-    const user = await verifyToken(token);
+    const user = await verifyIdToken(token);
     return { userName: user?.name ?? "Unknown" };
   } catch {
     // トークンの検証に失敗した場合はログイン画面へリダイレクト
+    // refresh トークンを使って再発行する処理を入れたいが今回は実装をサボる
     throw redirect("/login", {
       headers: {
         "Set-Cookie": "auth-token=; Path=/; HttpOnly; Secure; Max-Age=0",

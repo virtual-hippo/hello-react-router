@@ -16,15 +16,30 @@ function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export function createToken(user: Omit<User, "auth">) {
+export function createIdToken(user: Omit<User, "auth">) {
   return jwt.sign(user, JWT_SECRET, {
+    expiresIn: "1d",
+  });
+}
+
+export async function verifyIdToken(
+  token: string
+): Promise<Omit<User, "auth">> {
+  const jwtPayLoad = await jwt.verify(token, JWT_SECRET);
+  return jwtPayLoad as Omit<User, "auth">;
+}
+
+export function createRefreshToken(user: Omit<User, "auth">) {
+  return jwt.sign({ id: user.id }, JWT_SECRET, {
     expiresIn: "7d",
   });
 }
 
-export async function verifyToken(token: string): Promise<Omit<User, "auth">> {
+export async function verifyRefreshToken(
+  token: string
+): Promise<Pick<User, "id">> {
   const jwtPayLoad = await jwt.verify(token, JWT_SECRET);
-  return jwtPayLoad as Omit<User, "auth">;
+  return jwtPayLoad as Pick<User, "id">;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -93,16 +108,43 @@ export async function login(
 
   const userWithoutAuth = { id: user.id, name: user.name, email: user.email };
 
-  // TODO:
-  // - token ごとのペイロードを変える
-  // - id token は短めにする
-  // - refresh token は長めにする
-  const idToken = createToken(userWithoutAuth);
-  const refreshToken = createToken(userWithoutAuth);
+  const idToken = createIdToken(userWithoutAuth);
+  const refreshToken = createRefreshToken(userWithoutAuth);
 
   return {
     ok: true,
     idToken,
     refreshToken,
   };
+}
+
+export type RefreshResult =
+  | {
+      readonly ok: true;
+      readonly idToken: string;
+    }
+  | {
+      readonly ok: false;
+      readonly error?: string;
+    };
+
+export async function refresh(refreshToken: string): Promise<RefreshResult> {
+  try {
+    const { id: userId } = await verifyRefreshToken(refreshToken);
+
+    const user = users.find((u) => u.id === userId);
+    if (!user) {
+      return { ok: false, error: "User not found" };
+    }
+    const userWithoutAuth = { id: user.id, name: user.name, email: user.email };
+
+    const idToken = createIdToken(userWithoutAuth);
+
+    return {
+      ok: true,
+      idToken,
+    };
+  } catch {
+    return { ok: false };
+  }
 }
